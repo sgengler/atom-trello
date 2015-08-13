@@ -1,0 +1,21 @@
+{
+  "name": "atom-trello",
+  "main": "./lib/atom-trello",
+  "version": "0.1.0",
+  "description": "View and update Trello from within Atom",
+  "keywords": [
+    "trello"
+  ],
+  "activationCommands": {
+    "atom-workspace": "atom-trello:boards"
+  },
+  "repository": "https://github.com/atom/atom-trello",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "dependencies": {
+    "node-trello": "latest",
+    "atom-space-pen-views": "~2.1.0"
+  }
+}
