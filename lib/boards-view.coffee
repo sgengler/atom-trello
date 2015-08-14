@@ -4,28 +4,30 @@ Trello = require 'node-trello'
 
 module.exports =
 class BoardsView extends SelectListView
-  initialize: () ->
+  trl = null
+
+  initialize: (trl) ->
     super
+    self = @
+
+    @trl = trl
 
     @getFilterKey = () ->
       return 'name'
 
     @addClass('overlay from-top')
+    @setLoading "Your Boards are Loading!"
+    @panel ?= atom.workspace.addModalPanel(item: this, visible: false)
 
-    @panel ?= atom.workspace.addModalPanel(item: this)
-    @panel.show()
-    @focusFilterEditor()
+    @trl.get '/1/members/me/boards', { filter: "open" }, (err, data) ->
+      self.setItems(data)
+      self.focusFilterEditor()
 
-  viewForItem: (item) ->
-    "<li>#{item.name}</li>"
+  viewForItem: (board) ->
+    "<li>#{board.name}</li>"
 
-  confirmed: (item) ->
-    t = new Trello '6598ad858d58b2371b5ace323a1b5d20', '5b84dee1ab57bfdb4bb814807d1524d7905845ddf1cf1b896c4e19c004860a83'
-
-    @activeCards = null
-    t.get "/1/boards/" + item.id + '/lists', {cards: "open"} ,(err, data) ->
-      lanesView = new LanesView()
-      lanesView.setItems(data)
+  confirmed: (board) ->
+    @lanesView = new LanesView(board)
 
   cancelled: ->
     @panel.hide()
