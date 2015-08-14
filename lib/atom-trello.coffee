@@ -6,7 +6,6 @@ module.exports = AtomTrello =
   atomTrelloView: null
 
   activate: (state) ->
-    console.log 'activating'
     @atomTrelloView = new AtomTrelloView()
     @subscriptions = new CompositeDisposable
     @atomTrelloView.loadBoards()
@@ -14,7 +13,6 @@ module.exports = AtomTrello =
     @subscriptions.add atom.commands.add 'atom-workspace', 'atom-trello:boards': => @boards()
 
   deactivate: ->
-    console.log 'deactivating'
     @subscriptions.dispose()
     @atomTrelloView.destroy()
 

@@ -7,14 +7,15 @@ class AtomTrelloView extends SelectListView
   trl: null
   elem: null
   backBtn: null
+  activeBoards: null
+  activeLanes: null
   initialize: () ->
+
     super
-
-    self = @
-    @trl = new Trello '6598ad858d58b2371b5ace323a1b5d20', '5b84dee1ab57bfdb4bb814807d1524d7905845ddf1cf1b896c4e19c004860a83'
-
     @getFilterKey = () ->
       return 'name'
+
+    @trl = new Trello '6598ad858d58b2371b5ace323a1b5d20', '5b84dee1ab57bfdb4bb814807d1524d7905845ddf1cf1b896c4e19c004860a83'
 
     @addClass('atom-trello overlay from-top')
     @panel ?= atom.workspace.addModalPanel(item: this)
@@ -25,56 +26,73 @@ class AtomTrelloView extends SelectListView
 
     @backBtn.appendTo(@elem).hide()
 
-    @backBtn.on 'mousedown', (e) ->
+    @backBtn.on 'mousedown', (e) =>
       e.preventDefault()
       e.stopPropagation()
-      self.cancel()
-      self.loadBoards()
+      @cancel()
+      if @activeLanes
+        @loadLanes()
+        @activeLanes = null
+      else
+        @loadBoards()
 
   viewForItem: (item) ->
     "<li>#{item.name}</li>"
+
+  showView: (items) ->
+    @setItems(items)
+    @focusFilterEditor()
 
   loadBoards: () ->
     self = @
     @panel.show()
     @backBtn.hide()
     @setLoading "Your Boards are Loading!"
-    @trl.get '/1/members/me/boards', { filter: "open" }, (err, data) ->
-      self.setItems(data)
-      self.focusFilterEditor()
-      self.confirmed = (board) ->
-        self.cancel()
-        self.loadLanes(board)
+
+    @confirmed = (board) =>
+      @cancel()
+      @loadLanes(board)
+
+    if @activeBoards
+      @showView(@activeBoards)
+      return
+
+    @trl.get '/1/members/me/boards', { filter: "open" }, (err, data) =>
+      @activeBoards = data;
+      @showView(@activeBoards)
 
   loadLanes: (board) ->
-    self = @
     @panel.show()
     @setLoading "Your Lanes are Loading!"
 
-    @trl.get "/1/boards/" + board.id + '/lists', {cards: "open"} ,(err, data) ->
-      self.setItems(data)
-      self.panel.show()
-      self.focusFilterEditor()
-      self.backBtn.show()
-      self.confirmed = (lane) ->
-        console.log 'selected'
-        self.cancel()
-        self.loadCards(lane)
+    @confirmed = (lane) =>
+      @cancel()
+      @loadCards(lane)
+
+    if @activeLanes
+      @showView(@activeLanes)
+      @backBtn.show()
+      return
+
+    @trl.get "/1/boards/" + board.id + '/lists', {cards: "open"} ,(err, data) =>
+      @activeLanes = data
+      @showView(@activeLanes)
+      @backBtn.show()
 
   loadCards: (lane) ->
-    self = @
     @panel.show()
     @setLoading "Your Cards are Loading!"
-    @trl.get "/1/members/me", { cards: "open" }, (err, data) ->
+    @trl.get "/1/members/me", { cards: "open" }, (err, data) =>
       activeCards = data.cards.filter (card) ->
         return card.idList == lane.id
 
-      self.setItems(activeCards)
-      self.panel.show()
-      self.focusFilterEditor()
+      @setItems(activeCards)
+      @panel.show()
+      @focusFilterEditor()
 
-      self.confirmed = (card) ->
-        self.cancel()
+      @confirmed = (card) =>
+        console.log card
+        @cancel()
 
   cancelled: ->
     @panel.hide()
