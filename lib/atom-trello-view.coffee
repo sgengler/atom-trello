@@ -1,30 +1,29 @@
 {SelectListView} = require 'atom-space-pen-views'
 {$} = require 'space-pen'
 Trello = require 'node-trello'
+Shell = require 'shell'
 
 module.exports =
+
 class AtomTrelloView extends SelectListView
   trl: null
   elem: null
   backBtn: null
   activeBoards: null
   activeLanes: null
-  initialize: () ->
 
+  initialize: () ->
     super
     @getFilterKey = () ->
       return 'name'
 
-    @trl = new Trello '6598ad858d58b2371b5ace323a1b5d20', '5b84dee1ab57bfdb4bb814807d1524d7905845ddf1cf1b896c4e19c004860a83'
-
     @addClass('atom-trello overlay from-top')
     @panel ?= atom.workspace.addModalPanel(item: this)
-
     @elem = $(@panel.item.element)
-
     @backBtn = $("<div id='back_btn' class='block'><button class='btn icon icon-arrow-left inline-block-tight'>Back</button></div>")
-
     @backBtn.appendTo(@elem).hide()
+
+    @setApi()
 
     @backBtn.on 'mousedown', (e) =>
       e.preventDefault()
@@ -36,14 +35,68 @@ class AtomTrelloView extends SelectListView
       else
         @loadBoards()
 
+  setApi: () ->
+    @setApiConfig = () =>
+      if !@setApiKeys()
+        return
+
+      @activeBoards = null
+      @cancel()
+      @loadBoards()
+      @panel.hide()
+
+    atom.config.onDidChange 'atom-trello.devKey', ({newValue, oldValue}) =>
+      if newValue and !atom.config.get('atom-trello.token')
+        Shell.openExternal("https://trello.com/1/connect?key=#{newValue}&name=AtomTrello&response_type=token&scope=read,write&expiration=never")
+      else
+        @sendWelcome () => @setApiConfig()
+
+    atom.config.onDidChange 'atom-trello.token', ({newValue, oldValue}) =>
+      @sendWelcome () => @setApiConfig()
+
+    @setApiConfig()
+
+  setApiKeys: () ->
+    @devKey = atom.config.get('atom-trello.devKey')
+    @token = atom.config.get('atom-trello.token')
+
+    if !@devKey || !@token
+      return false
+
+    @trl = new Trello @devKey, @token
+    return true
+
+  sendWelcome: (callback) =>
+    if !@setApiKeys()
+      atom.notifications.addWarning 'Please enter your Trello key and token in the settings'
+      return
+
+    @trl.get '/1/members/me', (err, data) =>
+      if err?
+        atom.notifications.addError 'Failed to set Trello API, check your credentials'
+        return
+      if data.username
+        atom.notifications.addSuccess "Hey #{data.fullName} you're good to go!"
+        if callback
+          callback()
+
   viewForItem: (item) ->
-    "<li>#{item.name}</li>"
+    if item.desc?
+      "<li class='two-lines'>
+          <div class='primary-line'>#{item.name}</div>
+          <div class='secondary-line'>#{item.desc}</div>
+      </li>"
+    else
+      "<li>#{item.name}</li>"
 
   showView: (items) ->
     @setItems(items)
     @focusFilterEditor()
 
   loadBoards: () ->
+    if !@trl
+      return
+
     self = @
     @panel.show()
     @backBtn.hide()
@@ -91,8 +144,13 @@ class AtomTrelloView extends SelectListView
       @focusFilterEditor()
 
       @confirmed = (card) =>
-        console.log card
-        @cancel()
+        Shell.openExternal(card.url)
+
+  cardActions: (card) ->
+    @panel.show()
+    @setLoading "Loading Card"
+    @trl.get "/1/cards/" + card.id, (err, data) =>
+      console.log data
 
   cancelled: ->
     @panel.hide()
