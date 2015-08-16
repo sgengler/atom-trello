@@ -10,6 +10,8 @@ class AtomTrelloView extends SelectListView
   backBtn: null
   activeBoards: null
   activeLanes: null
+  currentView: 'boards'
+  user: null
 
   initialize: () ->
     super
@@ -19,23 +21,24 @@ class AtomTrelloView extends SelectListView
     @addClass('atom-trello overlay from-top')
     @panel ?= atom.workspace.addModalPanel(item: this)
     @elem = $(@panel.item.element)
-    @backBtn = $("<div id='back_btn' class='block'><button class='btn icon icon-arrow-left inline-block-tight'>Back</button></div>")
-    @backBtn.appendTo(@elem).hide()
 
-    @backBtn.on 'mousedown', (e) =>
-      e.preventDefault()
-      e.stopPropagation()
-      @cancel()
-      if @activeLanes
-        @loadLanes()
-        @activeLanes = null
-      else
-        @loadBoards()
+    @setButtons()
 
   setApi: (api) ->
     @api = api
 
+  setUser: (user) ->
+    @user = user
+
   viewForItem: (item) ->
+    switch @currentView
+      when 'cards' then @cardsView(item)
+      else @defaultView(item)
+
+  defaultView: (item) ->
+    "<li>#{item.name}</li>"
+
+  cardsView: (item) ->
     if item.desc?
       "<li class='two-lines'>
           <div class='primary-line'>#{item.name}</div>
@@ -44,11 +47,15 @@ class AtomTrelloView extends SelectListView
     else
       "<li>#{item.name}</li>"
 
-  showView: (items) ->
+  showView: (items, showBackBtn = true) ->
     @setItems(items)
     @focusFilterEditor()
+    if showBackBtn then @backBtn.show() else @backBtn.hide()
 
   loadBoards: () ->
+    @currentView = 'boards'
+    @activeLanes = null
+    @panel.show()
     @backBtn.hide()
     @setLoading "Your Boards are Loading!"
 
@@ -57,15 +64,17 @@ class AtomTrelloView extends SelectListView
       @loadLanes(board)
 
     if @activeBoards
-      @showView(@activeBoards)
+      @showView @activeBoards, false
       return
 
     @api.get '/1/members/me/boards', { filter: "open" }, (err, data) =>
       @activeBoards = data;
-      @showView(@activeBoards)
+      @showView @activeBoards, false
 
   loadLanes: (board) ->
+    @currentView = 'lanes'
     @panel.show()
+    @backBtn.hide()
     @setLoading "Your Lanes are Loading!"
 
     @confirmed = (lane) =>
@@ -80,27 +89,63 @@ class AtomTrelloView extends SelectListView
     @api.get "/1/boards/" + board.id + '/lists', {cards: "open"} ,(err, data) =>
       @activeLanes = data
       @showView(@activeLanes)
-      @backBtn.show()
 
   loadCards: (lane) ->
+    @currentView = 'cards'
     @panel.show()
+    @backBtn.hide()
     @setLoading "Your Cards are Loading!"
-    @api.get "/1/members/me", { cards: "open" }, (err, data) =>
-      activeCards = data.cards.filter (card) ->
-        return card.idList == lane.id
 
-      @setItems(activeCards)
-      @panel.show()
-      @focusFilterEditor()
+    @confirmed = (card) =>
+      Shell.openExternal(card.url)
 
-      @confirmed = (card) =>
-        Shell.openExternal(card.url)
+    console.log @user.id
+
+    @api.get "/1/lists/#{lane.id}/cards", { filter: "open" }, (err, data) =>
+      activeCards = data
+      @showView(activeCards)
+      console.log data
+
+    # @api.get "/1/members/me", { cards: "open" }, (err, data) =>
+    #   activeCards = data.cards.filter (card) ->
+    #     return card.idList == lane.id
+    #   @showView(activeCards)
 
   cardActions: (card) ->
+    @currentView = 'card'
     @panel.show()
     @setLoading "Loading Card"
     @api.get "/1/cards/" + card.id, (err, data) =>
       console.log data
+
+  setButtons: () ->
+    @backBtn = $("<div id='back_btn' class='block'><button class='btn icon icon-arrow-left inline-block-tight'>Back</button></div>")
+    @backBtn
+      .appendTo(@elem)
+      .hide()
+      .on 'mousedown', (e) =>
+        e.preventDefault()
+        e.stopPropagation()
+        @cancel()
+        switch @currentView
+          when 'card' then @loadCards()
+          when 'cards' then @loadLanes()
+          when 'lanes' then @loadBoards()
+          else @loadBoards()
+
+    @cardFilter = $('<div class="settings-view"><div class="checkbox"><input id="atomTrello_cardFilter" type="checkbox"><div class="setting-title">show only cards assigned to me</div></div></div>')
+    @cardFilterInput = @cardFilter.find('input')
+    @cardFilter.appendTo(@elem)
+
+    @cardFilter
+      .on 'mousedown', (e) =>
+        e.preventDefault()
+        e.stopPropagation()
+        checkstate = !@cardFilterInput.prop('checked')
+        @cardFilterInput.prop('checked', checkstate)
+      .find('input').on 'click change', (e) =>
+        e.preventDefault()
+        e.stopPropagation()
 
   cancelled: ->
     @panel.hide()

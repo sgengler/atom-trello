@@ -37,10 +37,9 @@ module.exports = AtomTrello =
     @atomTrelloView = new AtomTrelloView()
     @setApi()
     @atomTrelloView.setApi @api
+    @getUser (data) =>
+      @atomTrelloView.setUser data
     @atomTrelloView.loadBoards()
-    @atomTrelloView.panel.show()
-    @atomTrelloView.populateList()
-    @atomTrelloView.focusFilterEditor()
     @hasLoaded = true
 
   toggle: ->
@@ -80,13 +79,19 @@ module.exports = AtomTrello =
     @api = new Trello @devKey, @token
     return true
 
-  sendWelcome: (callback) ->
-    @setApi()
+  getUser: (callback) ->
     @api.get '/1/members/me', (err, data) =>
       if err?
         atom.notifications.addError 'Failed to set Trello API, check your credentials'
         @api = null
         return
+      if data.username
+        if callback
+          callback(data)
+
+  sendWelcome: (callback) ->
+    @setApi()
+    @api.getUser (data) ->
       if data.username
         atom.notifications.addSuccess "Hey #{data.fullName} you're good to go!"
         if callback
