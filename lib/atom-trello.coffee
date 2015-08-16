@@ -1,14 +1,12 @@
 AtomTrelloView = require './atom-trello-view'
-http = require('http')
-OAuth = require('oauth').OAuth
-url = require('url')
+Trello = require 'node-trello'
 {CompositeDisposable} = require 'atom'
 
 module.exports = AtomTrello =
   subscriptions: null
   atomTrelloView: null
   hasLoaded: false
-  trl: null
+  api: null
 
   config: {
     devKey:
@@ -25,6 +23,7 @@ module.exports = AtomTrello =
 
   activate: (state) ->
     @subscriptions = new CompositeDisposable
+    @settingsInit()
     @subscriptions.add atom.commands.add 'atom-workspace', 'atom-trello:toggle': => @toggle()
 
   deactivate: ->
@@ -34,18 +33,23 @@ module.exports = AtomTrello =
   # serialize: ->
   #   atomTestViewState: @atomTestView.serialize()
 
+  initialize: () ->
+    @atomTrelloView = new AtomTrelloView()
+    @setApi()
+    @atomTrelloView.setApi @api
+    @atomTrelloView.loadBoards()
+    @atomTrelloView.panel.show()
+    @atomTrelloView.populateList()
+    @atomTrelloView.focusFilterEditor()
+    @hasLoaded = true
+
   toggle: ->
-    if !@setApiKeys
+    if !@setApi() or !@api
       atom.notifications.addWarning 'Please enter your Trello key and token in the settings'
       return
 
     if !@hasLoaded
-      @atomTrelloView = new AtomTrelloView()
-      @atomTrelloView.loadBoards()
-      @atomTrelloView.panel.show()
-      @atomTrelloView.populateList()
-      @atomTrelloView.focusFilterEditor()
-      @hasLoaded = true
+      @initialize()
       return
 
     if @atomTrelloView.panel.isVisible()
@@ -55,37 +59,33 @@ module.exports = AtomTrello =
       @atomTrelloView.populateList()
       @atomTrelloView.focusFilterEditor()
 
-  setApi: () ->
+  settingsInit: () ->
     atom.config.onDidChange 'atom-trello.devKey', ({newValue, oldValue}) =>
       if newValue and !atom.config.get('atom-trello.token')
         Shell.openExternal("https://trello.com/1/connect?key=#{newValue}&name=AtomTrello&response_type=token&scope=read,write&expiration=never")
       else
-        @sendWelcome () => @setApiConfig()
+        @sendWelcome()
 
     atom.config.onDidChange 'atom-trello.token', ({newValue, oldValue}) =>
-      @setApiKeys
-      @sendWelcome () => @setApiConfig()
+      if newValue
+        @sendWelcome()
 
-    if !@setApiKeys()
-      atom.notifications.addWarning 'Please enter your Trello key and token in the settings'
-    else
-      @setApiConfig()
-
-  setApiKeys: () ->
+  setApi: () ->
     @devKey = atom.config.get('atom-trello.devKey')
     @token = atom.config.get('atom-trello.token')
 
     if !@devKey || !@token
       return false
 
-    @trl = new Trello @devKey, @token
+    @api = new Trello @devKey, @token
     return true
 
-  sendWelcome: (callback) =>
-
-    @trl.get '/1/members/me', (err, data) =>
+  sendWelcome: (callback) ->
+    @setApi()
+    @api.get '/1/members/me', (err, data) =>
       if err?
         atom.notifications.addError 'Failed to set Trello API, check your credentials'
+        @api = null
         return
       if data.username
         atom.notifications.addSuccess "Hey #{data.fullName} you're good to go!"
