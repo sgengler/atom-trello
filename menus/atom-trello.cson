@@ -2,8 +2,8 @@
 'context-menu':
   'atom-text-editor': [
     {
-      'label': 'Trello: View Boards'
-      'command': 'atom-trello:boards'
+      'label': 'Trello'
+      'command': 'atom-trello:toggle'
     }
   ]
 'menu': [
@@ -13,8 +13,8 @@
       'label': 'atom-trello'
       'submenu': [
         {
-          'label': 'View Boards'
-          'command': 'atom-trello:boards'
+          'label': 'Trello'
+          'command': 'atom-trello:toggle'
         }
       ]
     ]
