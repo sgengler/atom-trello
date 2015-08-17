@@ -2,7 +2,7 @@
 'context-menu':
   'atom-text-editor': [
     {
-      'label': 'Trello'
+      'label': 'Trello View'
       'command': 'atom-trello:toggle'
     }
   ]
@@ -10,10 +10,10 @@
   {
     'label': 'Packages'
     'submenu': [
-      'label': 'atom-trello'
+      'label': 'Trello'
       'submenu': [
         {
-          'label': 'Trello'
+          'label': 'Toggle'
           'command': 'atom-trello:toggle'
         }
       ]
