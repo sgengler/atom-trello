@@ -6,7 +6,7 @@
   "keywords": [
     "trello"
   ],
-  "repository": "https://github.com/atom/atom-trello",
+  "repository": "https://github.com/sgengler/atom-trello",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
