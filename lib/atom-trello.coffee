@@ -1,5 +1,6 @@
 AtomTrelloView = require './atom-trello-view'
 Trello = require 'node-trello'
+Shell = require 'shell'
 {CompositeDisposable} = require 'atom'
 
 module.exports = AtomTrello =
@@ -90,8 +91,9 @@ module.exports = AtomTrello =
           callback(data)
 
   sendWelcome: (callback) ->
-    @setApi()
-    @api.getUser (data) ->
+    if !@setApi()
+      return
+    @getUser (data) ->
       if data.username
         atom.notifications.addSuccess "Hey #{data.fullName} you're good to go!"
         if callback
