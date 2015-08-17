@@ -1,3 +1,3 @@
 ## 0.1.0 - First Release
-* Every feature added
-* Every bug fixed
+* Toggle viewing only cards assigned to you
+* Selecting a card opens it in an external browser

@@ -1,5 +1,5 @@
 # atom-trello package
 
-A short description of your package.
+View Trello Boards, Swim Lanes, and Cards from within Atom.
 
-![A screenshot of your package](https://f.cloud.github.com/assets/69169/2290250/c35d867a-a017-11e3-86be-cd7c5bf3ff9b.gif)
+![A screenshot of your package](https://cloud.githubusercontent.com/assets/3884266/9296528/bae91cf8-445c-11e5-940f-dc8b2466102e.png)
