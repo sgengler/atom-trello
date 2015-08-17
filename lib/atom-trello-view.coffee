@@ -12,6 +12,7 @@ class AtomTrelloView extends SelectListView
   activeLanes: null
   currentView: 'boards'
   user: null
+  avatarUrl: "https://trello-avatars.s3.amazonaws.com/"
 
   initialize: () ->
     super
@@ -39,13 +40,25 @@ class AtomTrelloView extends SelectListView
     "<li>#{item.name}</li>"
 
   cardsView: (item) ->
-    if item.desc?
-      "<li class='two-lines'>
-          <div class='primary-line'>#{item.name}</div>
-          <div class='secondary-line'>#{item.desc}</div>
-      </li>"
-    else
-      "<li>#{item.name}</li>"
+    avatars = () =>
+      avatarString = ""
+      item.members.map (obj) =>
+        if obj.avatarHash
+          avatarString += "<img class='at-avatar' src='#{@getAvatar obj.avatarHash}'/>"
+        else
+          avatarString += "<span class='at-avatar no-img'>#{obj.initials}</span>"
+      return avatarString
+
+    if @filterMyCards and @user.id not in item.idMembers
+      return false
+
+    "<li class='two-lines'>
+        <div class='primary-line'>
+          <div class='at-title'>#{item.name}</div>
+          <div class='at-avatars'>#{avatars()}</div>
+        </div>
+        <div class='secondary-line'>#{item.desc}</div>
+    </li>"
 
   showView: (items, showBackBtn = true) ->
     @setItems(items)
@@ -88,6 +101,7 @@ class AtomTrelloView extends SelectListView
 
     @api.get "/1/boards/" + board.id + '/lists', {cards: "open"} ,(err, data) =>
       @activeLanes = data
+      @activeCards = null
       @showView(@activeLanes)
 
   loadCards: (lane) ->
@@ -99,17 +113,12 @@ class AtomTrelloView extends SelectListView
     @confirmed = (card) =>
       Shell.openExternal(card.url)
 
-    console.log @user.id
+    user = @user
 
-    @api.get "/1/lists/#{lane.id}/cards", { filter: "open" }, (err, data) =>
+    @api.get "/1/lists/#{lane.id}/cards", { filter: "open", members: true }, (err, data) =>
       activeCards = data
-      @showView(activeCards)
-      console.log data
 
-    # @api.get "/1/members/me", { cards: "open" }, (err, data) =>
-    #   activeCards = data.cards.filter (card) ->
-    #     return card.idList == lane.id
-    #   @showView(activeCards)
+      @showView(activeCards)
 
   cardActions: (card) ->
     @currentView = 'card'
@@ -133,7 +142,7 @@ class AtomTrelloView extends SelectListView
           when 'lanes' then @loadBoards()
           else @loadBoards()
 
-    @cardFilter = $('<div class="settings-view"><div class="checkbox"><input id="atomTrello_cardFilter" type="checkbox"><div class="setting-title">show only cards assigned to me</div></div></div>')
+    @cardFilter = $('<div class="settings-view at-filter"><div class="checkbox"><input id="atomTrello_cardFilter" type="checkbox"><div class="setting-title">show only cards assigned to me</div></div></div>')
     @cardFilterInput = @cardFilter.find('input')
     @cardFilter.appendTo(@elem)
 
@@ -141,11 +150,16 @@ class AtomTrelloView extends SelectListView
       .on 'mousedown', (e) =>
         e.preventDefault()
         e.stopPropagation()
-        checkstate = !@cardFilterInput.prop('checked')
-        @cardFilterInput.prop('checked', checkstate)
+        @filterMyCards = !@cardFilterInput.prop('checked')
+        @cardFilterInput.prop('checked', @filterMyCards)
+        @populateList()
       .find('input').on 'click change', (e) =>
         e.preventDefault()
         e.stopPropagation()
+
+  getAvatar: (id, large = false) ->
+    size = if large then '170' else '30'
+    return @avatarUrl + id + "/#{size}.png"
 
   cancelled: ->
     @panel.hide()

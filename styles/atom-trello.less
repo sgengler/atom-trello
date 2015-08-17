@@ -17,8 +17,32 @@
       word-wrap: break-word !important;
     }
   }
-  .settings-view {
+
+  .at-title {
+    float: left;
+  }
+  
+  .at-avatars {
     float: right;
+    .at-avatar {
+      overflow: hidden;
+      float: left;
+      border-radius: 50%;
+      display: block;
+      text-align: center;
+      margin-left: @component-padding / 2;
+      width: @component-line-height;
+      height: @component-line-height;
+      line-height: @component-line-height;
+      &.no-img {
+        border: 1px solid @inset-panel-border-color;
+      }
+    }
+  }
+
+
+  .at-filter {
+    justify-content: flex-end;
     .checkbox {
       cursor: pointer
     }
