@@ -10,20 +10,26 @@
     float: left;
   }
   li {
-    .secondary-line {
+    .primary-line, .secondary-line {
       white-space: normal !important;
       text-overflow: clip !important;
       overflow: visible !important;
       word-wrap: break-word !important;
+      clear: both;
     }
   }
 
   .at-title {
     float: left;
   }
-  
+
+  pre {
+    font-size: 1em !important;
+  }
+
   .at-avatars {
     float: right;
+    margin-bottom: 5px;
     .at-avatar {
       overflow: hidden;
       float: left;

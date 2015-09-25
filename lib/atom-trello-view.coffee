@@ -1,6 +1,8 @@
 {SelectListView} = require 'atom-space-pen-views'
 {$} = require 'space-pen'
-Shell = require 'shell'
+Shell = require 'shell',
+Entities = require('html-entities').AllHtmlEntities;
+Marked = require('marked');
 
 module.exports =
 
@@ -13,6 +15,7 @@ class AtomTrelloView extends SelectListView
   currentView: 'boards'
   user: null
   avatarUrl: "https://trello-avatars.s3.amazonaws.com/"
+  entities: new Entities()
 
   initialize: () ->
     super
@@ -22,8 +25,12 @@ class AtomTrelloView extends SelectListView
     @addClass('atom-trello overlay from-top')
     @panel ?= atom.workspace.addModalPanel(item: this)
     @elem = $(@panel.item.element)
-
     @setButtons()
+
+    Marked.setOptions({
+      sanitize: true
+    })
+
 
   setApi: (api) ->
     @api = api
@@ -31,6 +38,8 @@ class AtomTrelloView extends SelectListView
   setUser: (user) ->
     @user = user
 
+  encode: (str) ->
+    str = str.replace()
   viewForItem: (item) ->
     switch @currentView
       when 'cards' then @cardsView(item)
@@ -52,12 +61,14 @@ class AtomTrelloView extends SelectListView
     if @filterMyCards and @user.id not in item.idMembers
       return false
 
+    console.log(Marked(item.desc));
+
     "<li class='two-lines'>
         <div class='primary-line'>
-          <div class='at-title'>#{item.name}</div>
+          <div class='at-title'>#{@entities.encode(item.name)}</div>
           <div class='at-avatars'>#{avatars()}</div>
         </div>
-        <div class='secondary-line'>#{item.desc}</div>
+        <div class='secondary-line'>#{Marked(item.desc)}</div>
     </li>"
 
   showView: (items, showBackBtn = true) ->
