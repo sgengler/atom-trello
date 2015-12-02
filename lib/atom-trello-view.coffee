@@ -48,6 +48,10 @@ class AtomTrelloView extends SelectListView
   defaultView: (item) ->
     "<li>#{item.name}</li>"
 
+  itemDescription: (description) ->
+    if description and @showDesc
+      return "<div class='secondary-line'>#{Marked(description)}</div>"
+
   cardsView: (item) ->
     avatars = () =>
       avatarString = ""
@@ -61,14 +65,13 @@ class AtomTrelloView extends SelectListView
     if @filterMyCards and @user.id not in item.idMembers
       return false
 
-    console.log(Marked(item.desc));
 
     "<li class='two-lines'>
         <div class='primary-line'>
           <div class='at-title'>#{@entities.encode(item.name)}</div>
           <div class='at-avatars'>#{avatars()}</div>
         </div>
-        <div class='secondary-line'>#{Marked(item.desc)}</div>
+        #{@itemDescription(item.desc)}
     </li>"
 
   showView: (items, showBackBtn = true) ->
@@ -153,9 +156,11 @@ class AtomTrelloView extends SelectListView
           when 'lanes' then @loadBoards()
           else @loadBoards()
 
-    @cardFilter = $('<div class="settings-view at-filter"><div class="checkbox"><input id="atomTrello_cardFilter" type="checkbox"><div class="setting-title">show only cards assigned to me</div></div></div>')
+    @cardOptions = $('<div class="settings-view at-filter"></div>');
+
+    @cardFilter = $('<div class="checkbox"><input id="atomTrello_cardFilter" type="checkbox"><div class="setting-title">only my cards</div></div>')
     @cardFilterInput = @cardFilter.find('input')
-    @cardFilter.appendTo(@elem)
+    @cardFilter.appendTo(@cardOptions)
 
     @cardFilter
       .on 'mousedown', (e) =>
@@ -167,6 +172,23 @@ class AtomTrelloView extends SelectListView
       .find('input').on 'click change', (e) =>
         e.preventDefault()
         e.stopPropagation()
+
+    @descFilter = $('<div class="checkbox"><input id="atomTrello_descFilter" type="checkbox"><div class="setting-title">show descriptions</div></div>')
+    @descFilterInput = @descFilter.find('input')
+    @descFilter.appendTo(@cardOptions)
+
+    @descFilter
+      .on 'mousedown', (e) =>
+        e.preventDefault()
+        e.stopPropagation()
+        @showDesc = !@descFilterInput.prop('checked')
+        @descFilterInput.prop('checked', @showDesc)
+        @populateList()
+      .find('input').on 'click change', (e) =>
+        e.preventDefault()
+        e.stopPropagation()
+
+    @cardOptions.appendTo(@elem)
 
   getAvatar: (id, large = false) ->
     size = if large then '170' else '30'

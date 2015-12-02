@@ -31,6 +31,7 @@
   .at-avatars {
     float: right;
     margin-bottom: 5px;
+    margin-top: -2px;
     .at-avatar {
       overflow: hidden;
       float: left;
@@ -49,9 +50,25 @@
 
 
   .at-filter {
-    justify-content: flex-end;
+    display: block;
+    float: right;
+    margin-top: 5px;
     .checkbox {
-      cursor: pointer
+      cursor: pointer;
+      font-size: 9px;
+      display: inline-block;
+      margin-left: @component-padding * 2;
     }
   }
+
+
+  .theme-atom-material-ui & {
+    .at-filter {
+      margin-right: 10px;
+    }
+    #back_btn {
+      margin-left: 10px;
+    }
+  }
+
 }
