@@ -1,7 +1,7 @@
 {
   "name": "atom-trello",
   "main": "./lib/atom-trello",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "View Trello Boards, Swim Lanes, and Cards from within Atom",
   "keywords": [
     "trello"
