@@ -34,7 +34,7 @@ module.exports = AtomTrello =
   # serialize: ->
   #   atomTestViewState: @atomTestView.serialize()
 
-  initialize: () ->
+  initializePackage: () ->
     @atomTrelloView = new AtomTrelloView()
     @setApi()
     @atomTrelloView.setApi @api
@@ -49,7 +49,7 @@ module.exports = AtomTrello =
       return
 
     if !@hasLoaded
-      @initialize()
+      @initializePackage()
       return
 
     if @atomTrelloView.panel.isVisible()
