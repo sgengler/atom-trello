@@ -71,7 +71,9 @@ class AtomTrelloView extends SelectListView
           <div class='at-title'>#{@entities.encode(item.name)}</div>
           <div class='at-avatars'>#{avatars()}</div>
         </div>
-        #{@itemDescription(item.desc)}
+        <div class='atom-trello-card-description'>
+          #{@itemDescription(item.desc)}
+        </div>
     </li>"
 
   showView: (items, showBackBtn = true) ->
@@ -146,7 +148,7 @@ class AtomTrelloView extends SelectListView
     @backBtn
       .appendTo(@elem)
       .hide()
-      .on 'mousedown', (e) =>
+      .on 'mouseup', (e) =>
         e.preventDefault()
         e.stopPropagation()
         @cancel()
@@ -156,6 +158,11 @@ class AtomTrelloView extends SelectListView
           when 'lanes' then @loadBoards()
           else @loadBoards()
 
+    @backBtn
+      .on 'mousedown', (e) =>
+        e.preventDefault()
+        e.stopPropagation()
+
     @cardOptions = $('<div class="settings-view at-filter"></div>');
 
     @cardFilter = $('<div class="checkbox"><input id="atomTrello_cardFilter" type="checkbox"><div class="setting-title">only my cards</div></div>')
@@ -164,6 +171,11 @@ class AtomTrelloView extends SelectListView
 
     @cardFilter
       .on 'mousedown', (e) =>
+        e.preventDefault()
+        e.stopPropagation()
+
+    @cardFilter
+      .on 'mouseup', (e) =>
         e.preventDefault()
         e.stopPropagation()
         @filterMyCards = !@cardFilterInput.prop('checked')
@@ -179,6 +191,11 @@ class AtomTrelloView extends SelectListView
 
     @descFilter
       .on 'mousedown', (e) =>
+        e.preventDefault()
+        e.stopPropagation()
+
+    @descFilter
+      .on 'mouseup', (e) =>
         e.preventDefault()
         e.stopPropagation()
         @showDesc = !@descFilterInput.prop('checked')

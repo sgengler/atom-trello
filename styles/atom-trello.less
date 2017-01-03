@@ -11,12 +11,49 @@
     float: left;
   }
   li {
-    .primary-line, .secondary-line {
+    .primary-line, .secondary-line, .atom-trello-card-description li {
       white-space: normal !important;
       text-overflow: clip !important;
       overflow: visible !important;
       word-wrap: break-word !important;
       clear: both;
+    }
+  }
+
+  .atom-trello-card-description {
+    li {
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 0 5px !important;
+
+    }
+
+    ol, ul {
+      li {
+        &:before {
+          position: absolute;
+          margin-left: -1.8em;
+        }
+      }
+    }
+
+    ol {
+      counter-reset: cardList;
+      li {
+        &:before {
+          counter-increment: cardList;
+          content: counter(cardList)". ";
+
+        }
+      }
+    }
+    ul {
+      li {
+        &:before {
+          content: '- ';
+
+        }
+      }
     }
   }
 
